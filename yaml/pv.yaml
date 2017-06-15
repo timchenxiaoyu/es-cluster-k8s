@@ -1,0 +1,22 @@
+apiVersion: v1
+kind:   PersistentVolume
+metadata:
+  name: ceph-pv
+  labels:
+    name: ceph-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  rbd:
+    keyring: /etc/ceph/ceph.client.admin.keyring
+    monitors:
+      - "10.39.0.114:6789"
+      - "10.39.0.115:6789"
+      - "10.39.0.116:6789"
+    pool: rbd
+    image: demoimage
+    user: admin
+    fsType: ext4
+

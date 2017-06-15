@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: es-data
+  labels:
+    petset: es-data
+    role: es-data
+spec:
+  ports:
+  - port: 9300
+    name: transport
+  clusterIP: None
+  selector:
+    petset: es-data
+    role: es-data
+---
+
+apiVersion: apps/v1alpha1
+kind: PetSet
+metadata:
+  name: es-data
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      role: es-data
+      petset: es-data
+  serviceName: es-data
+  template:
+    metadata:
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+      labels:
+        role: es-data
+        petset: es-data
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: es-data
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - IPC_LOCK
+          image: 10.39.0.118/xiaoyuchen/elasticsearch:test  
+          imagePullPolicy: Always
+          env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: "CLUSTER_NAME"
+            value: "myesdb"
+          - name: NODE_MASTER
+            value: "false"
+          - name: NODE_DATA
+            value: "true"
+          - name: HTTP_ENABLE
+            value: "false"
+          - name: ES_HEAP_SIZE
+            value: "256m"
+          - name: NETWORK_HOST
+            value: "0.0.0.0"
+          - name: ELASTICSEARCH_DISCOVERY_SERVICE_HOST
+            value: "es-master"
+          - name: ELASTICSEARCH_DISCOVERY_SERVICE_PORT
+            value: "9300"
+          ports:
+          - containerPort: 9300
+            name: transport
+            protocol: TCP
+          volumeMounts:
+          - name: storage
+            mountPath: /data
+      volumes:
+          - emptyDir:
+              medium: ""
+            name: "storage"
